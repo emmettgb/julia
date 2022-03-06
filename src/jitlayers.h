@@ -55,6 +55,7 @@ void addOptimizationPasses(legacy::PassManagerBase *PM, int opt_level, bool lowe
 void addMachinePasses(legacy::PassManagerBase *PM, TargetMachine *TM, int optlevel);
 void jl_finalize_module(orc::ThreadSafeModule  m);
 void jl_merge_module(orc::ThreadSafeModule &dest, orc::ThreadSafeModule src);
+void optimizeModule(Module &M, TargetMachine *TM, int opt_level, bool lower_intrinsics, bool dump_native);
 GlobalVariable *jl_emit_RTLD_DEFAULT_var(Module *M);
 DataLayout jl_create_datalayout(TargetMachine &TM);
 
@@ -192,12 +193,13 @@ public:
     typedef object::OwningBinary<object::ObjectFile> OwningObj;
 private:
     struct OptimizerT {
-        OptimizerT(legacy::PassManager &PM, std::mutex &mutex, int optlevel) : optlevel(optlevel), PM(PM), mutex(mutex) {}
+        OptimizerT(legacy::PassManager &PM, TargetMachine &TM, std::mutex &mutex, int optlevel) : optlevel(optlevel), PM(PM), TM(TM), mutex(mutex) {}
 
         OptimizerResultT operator()(orc::ThreadSafeModule M, orc::MaterializationResponsibility &R);
     private:
         int optlevel;
         legacy::PassManager &PM;
+        TargetMachine &TM;
         std::mutex &mutex;
     };
     // Custom object emission notification handler for the JuliaOJIT

@@ -511,7 +511,8 @@ OptimizerResultT JuliaOJIT::OptimizerT::operator()(orc::ThreadSafeModule TSM, or
         {
             //Lock around our pass manager
             std::lock_guard<std::mutex> lock(this->mutex);
-            PM.run(M);
+            // PM.run(M);
+            optimizeModule(M, &TM, optlevel, true, false);
         }
 
         uint64_t end_time = 0;
@@ -949,10 +950,10 @@ JuliaOJIT::JuliaOJIT(LLVMContext *LLVMCtx)
     CompileLayer2(ES, ObjectLayer, std::make_unique<orc::ConcurrentIRCompiler>(createJTMBFromTM(*TM, 2))),
     CompileLayer3(ES, ObjectLayer, std::make_unique<orc::ConcurrentIRCompiler>(createJTMBFromTM(*TM, 3))),
     OptimizeLayers{
-        {ES, CompileLayer0, OptimizerT(PM0, PM_mutexes[0], 0)},
-        {ES, CompileLayer1, OptimizerT(PM1, PM_mutexes[1], 1)},
-        {ES, CompileLayer2, OptimizerT(PM2, PM_mutexes[2], 2)},
-        {ES, CompileLayer3, OptimizerT(PM3, PM_mutexes[3], 3)},
+        {ES, CompileLayer0, OptimizerT(PM0, *TMs[0], PM_mutexes[0], 0)},
+        {ES, CompileLayer1, OptimizerT(PM1, *TMs[1], PM_mutexes[1], 1)},
+        {ES, CompileLayer2, OptimizerT(PM2, *TMs[2], PM_mutexes[2], 2)},
+        {ES, CompileLayer3, OptimizerT(PM3, *TMs[3], PM_mutexes[3], 3)},
     },
     OptSelLayer(OptimizeLayers)
 {
