@@ -55,7 +55,7 @@ void addOptimizationPasses(legacy::PassManagerBase *PM, int opt_level, bool lowe
 void addMachinePasses(legacy::PassManagerBase *PM, TargetMachine *TM, int optlevel);
 void jl_finalize_module(orc::ThreadSafeModule  m);
 void jl_merge_module(orc::ThreadSafeModule &dest, orc::ThreadSafeModule src);
-void optimizeModule(Module &M, TargetMachine *TM, int opt_level, bool lower_intrinsics, bool dump_native);
+void optimizeModule(Module &M, TargetMachine *TM, int opt_level, bool lower_intrinsics=true, bool dump_native=false);
 GlobalVariable *jl_emit_RTLD_DEFAULT_var(Module *M);
 DataLayout jl_create_datalayout(TargetMachine &TM);
 

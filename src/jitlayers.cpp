@@ -512,7 +512,7 @@ OptimizerResultT JuliaOJIT::OptimizerT::operator()(orc::ThreadSafeModule TSM, or
             //Lock around our pass manager
             std::lock_guard<std::mutex> lock(this->mutex);
             // PM.run(M);
-            optimizeModule(M, &TM, optlevel, true, false);
+            optimizeModule(M, &TM, optlevel);
         }
 
         uint64_t end_time = 0;
