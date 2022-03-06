@@ -1408,7 +1408,8 @@ void *jl_get_llvmf_defn_impl(jl_method_instance_t *mi, size_t world, char getwra
                 global.second->setLinkage(GlobalValue::ExternalLinkage);
             if (optimize)
                 //Safe b/c context lock is held by output
-                PM->run(*m.getModuleUnlocked());
+                // PM->run(*m.getModuleUnlocked());
+                optimizeModule(*m.getModuleUnlocked(), &jl_ExecutionEngine->getTargetMachine(), jl_options.opt_level, true, false);
             const std::string *fname;
             if (decls.functionObject == "jl_fptr_args" || decls.functionObject == "jl_fptr_sparam")
                 getwrapper = false;
