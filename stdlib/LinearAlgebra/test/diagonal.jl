@@ -786,8 +786,8 @@ end
         D = Diagonal(randn(elty, K))
         @test (U / D)::UpperTriangular{elty} ≈ UpperTriangular(Matrix(U) / Matrix(D)) rtol=2eps(real(elty))
         @test (L / D)::LowerTriangular{elty} ≈ LowerTriangular(Matrix(L) / Matrix(D)) rtol=2eps(real(elty))
-        @test (D \ U)::UpperTriangular{elty} ≈ UpperTriangular(Matrix(D) \ Matrix(U)) rtol=2eps(real(elty))
-        @test (D \ L)::LowerTriangular{elty} ≈ LowerTriangular(Matrix(D) \ Matrix(L)) rtol=2eps(real(elty))
+        @test (D \ U)::UpperTriangular{elty} == UpperTriangular(Matrix(D) \ Matrix(U)) rtol=2eps(real(elty))
+        @test (D \ L)::LowerTriangular{elty} == LowerTriangular(Matrix(D) \ Matrix(L)) rtol=2eps(real(elty))
     end
 end
 
