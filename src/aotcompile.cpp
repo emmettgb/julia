@@ -1263,6 +1263,7 @@ PIC.addClassToPassName(CLASS, NAME);
 PIC.addClassToPassName(decltype(CREATE_PASS)::name(), NAME);
 
 #include "llvm-julia-passes.inc"
+
     PassBuilder PB(TM, PipelineTuningOptions(), None, &PIC);
     // Create the analysis managers.
     LoopAnalysisManager LAM;
@@ -1292,6 +1293,9 @@ PIC.addClassToPassName(decltype(CREATE_PASS)::name(), NAME);
     PB.registerCGSCCAnalyses(CGAM);
 
     ModuleAnalysisManager MAM;
+#ifdef _COMPILER_ASAN_ENABLED_
+    MAM.registerPass([&]{ return llvm::ASanGlobalsMetadataAnalysis(); });
+#endif
     PB.registerModuleAnalyses(MAM);
 
     PB.crossRegisterProxies(LAM, FAM, CGAM, MAM);
