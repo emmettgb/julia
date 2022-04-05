@@ -4,8 +4,20 @@
 #include "platform.h"
 
 // target support
-#include <llvm/ADT/Triple.h>
+#include <llvm/ADT/Triple.h>\
+
+//LLVM's DenseMap complains about a maybe uninitialized variable, we don't care about that
+#ifdef _COMPILER_GCC_
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
+
 #include <llvm/Analysis/TargetLibraryInfo.h>
+
+#ifdef _COMPILER_GCC_
+#pragma GCC diagnostic pop
+#endif
+
 #include <llvm/Analysis/TargetTransformInfo.h>
 #include <llvm/IR/DataLayout.h>
 #if JL_LLVM_VERSION >= 140000
