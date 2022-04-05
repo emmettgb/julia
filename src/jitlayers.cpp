@@ -954,10 +954,11 @@ JuliaOJIT::JuliaOJIT()
             }
         ),
 #endif
-    CompileLayer0(ES, ObjectLayer, std::make_unique<orc::ConcurrentIRCompiler>(createJTMBFromTM(*TM, 0))),
-    CompileLayer1(ES, ObjectLayer, std::make_unique<orc::ConcurrentIRCompiler>(createJTMBFromTM(*TM, 1))),
-    CompileLayer2(ES, ObjectLayer, std::make_unique<orc::ConcurrentIRCompiler>(createJTMBFromTM(*TM, 2))),
-    CompileLayer3(ES, ObjectLayer, std::make_unique<orc::ConcurrentIRCompiler>(createJTMBFromTM(*TM, 3))),
+    ObjectLockingLayer(ES, ObjectLayer),
+    CompileLayer0(ES, ObjectLockingLayer, std::make_unique<orc::ConcurrentIRCompiler>(createJTMBFromTM(*TM, 0))),
+    CompileLayer1(ES, ObjectLockingLayer, std::make_unique<orc::ConcurrentIRCompiler>(createJTMBFromTM(*TM, 1))),
+    CompileLayer2(ES, ObjectLockingLayer, std::make_unique<orc::ConcurrentIRCompiler>(createJTMBFromTM(*TM, 2))),
+    CompileLayer3(ES, ObjectLockingLayer, std::make_unique<orc::ConcurrentIRCompiler>(createJTMBFromTM(*TM, 3))),
     OptimizeLayers{
         {ES, CompileLayer0, OptimizerT(PM0, PM_mutexes[0], 0)},
         {ES, CompileLayer1, OptimizerT(PM1, PM_mutexes[1], 1)},

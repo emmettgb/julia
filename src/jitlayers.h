@@ -298,6 +298,19 @@ private:
         size_t count;
     };
 
+    struct ObjectLockingLayerT : orc::ObjectLayer {
+        public:
+        ObjectLockingLayerT(orc::ExecutionSession &ES, orc::ObjectLayer &BaseLayer) : orc::ObjectLayer(ES), BaseLayer(BaseLayer) {}
+        void emit(std::unique_ptr<orc::MaterializationResponsibility> R,
+                    std::unique_ptr<MemoryBuffer> O) override {
+            std::lock_guard<std::mutex> lock(mutex);
+            BaseLayer.emit(std::move(R), std::move(O));
+        }
+        private:
+        orc::ObjectLayer &BaseLayer;
+        std::mutex mutex;
+    };
+
 public:
 
     JuliaOJIT();
@@ -355,6 +368,7 @@ private:
     std::shared_ptr<RTDyldMemoryManager> MemMgr;
 #endif
     ObjLayerT ObjectLayer;
+    ObjectLockingLayerT ObjectLockingLayer;
     CompileLayerT CompileLayer0;
     CompileLayerT CompileLayer1;
     CompileLayerT CompileLayer2;
