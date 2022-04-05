@@ -98,6 +98,7 @@ using namespace llvm;
 #include "julia_internal.h"
 #include "jitlayers.h"
 #include "julia_assert.h"
+#include "passes.h"
 
 template<class T> // for GlobalObject's
 static T *addComdat(T *G)
@@ -1232,6 +1233,36 @@ void optimizeModule(Module &M, TargetMachine *TM, int opt_level, bool lower_intr
     PassInstrumentationCallbacks PIC;
     StandardInstrumentations SI(false);
     SI.registerCallbacks(PIC);
+
+//Borrowed from LLVM PassBuilder.cpp:386
+#define MODULE_PASS(NAME, CREATE_PASS)                                         \
+PIC.addClassToPassName(decltype(CREATE_PASS)::name(), NAME);
+#define MODULE_PASS_WITH_PARAMS(NAME, CLASS, CREATE_PASS, PARSER, PARAMS)      \
+PIC.addClassToPassName(CLASS, NAME);
+#define MODULE_ANALYSIS(NAME, CREATE_PASS)                                     \
+PIC.addClassToPassName(decltype(CREATE_PASS)::name(), NAME);
+#define FUNCTION_PASS(NAME, CREATE_PASS)                                       \
+PIC.addClassToPassName(decltype(CREATE_PASS)::name(), NAME);
+#define FUNCTION_PASS_WITH_PARAMS(NAME, CLASS, CREATE_PASS, PARSER, PARAMS)    \
+PIC.addClassToPassName(CLASS, NAME);
+#define FUNCTION_ANALYSIS(NAME, CREATE_PASS)                                   \
+PIC.addClassToPassName(decltype(CREATE_PASS)::name(), NAME);
+#define LOOPNEST_PASS(NAME, CREATE_PASS)                                       \
+PIC.addClassToPassName(decltype(CREATE_PASS)::name(), NAME);
+#define LOOP_PASS(NAME, CREATE_PASS)                                           \
+PIC.addClassToPassName(decltype(CREATE_PASS)::name(), NAME);
+#define LOOP_PASS_WITH_PARAMS(NAME, CLASS, CREATE_PASS, PARSER, PARAMS)        \
+PIC.addClassToPassName(CLASS, NAME);
+#define LOOP_ANALYSIS(NAME, CREATE_PASS)                                       \
+PIC.addClassToPassName(decltype(CREATE_PASS)::name(), NAME);
+#define CGSCC_PASS(NAME, CREATE_PASS)                                          \
+PIC.addClassToPassName(decltype(CREATE_PASS)::name(), NAME);
+#define CGSCC_PASS_WITH_PARAMS(NAME, CLASS, CREATE_PASS, PARSER, PARAMS)       \
+PIC.addClassToPassName(CLASS, NAME);
+#define CGSCC_ANALYSIS(NAME, CREATE_PASS)                                      \
+PIC.addClassToPassName(decltype(CREATE_PASS)::name(), NAME);
+
+#include "llvm-julia-passes.inc"
     PassBuilder PB(TM, PipelineTuningOptions(), None, &PIC);
     // Create the analysis managers.
     LoopAnalysisManager LAM;
