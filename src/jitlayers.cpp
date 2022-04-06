@@ -911,6 +911,10 @@ namespace {
         .setCodeModel(TM.getCodeModel())
         .setCodeGenOptLevel(CodeGenOptLevelFor(optlevel));
     }
+
+    std::unique_ptr<orc::LazyCallThroughManager> createLCTM(const Triple &T, orc::ExecutionSession &ES, JITTargetAddress EH) {
+        return cantFail(orc::createLocalLazyCallThroughManager(T, ES, EH));
+    }
 }
 
 llvm::DataLayout jl_create_datalayout(TargetMachine &TM) {
@@ -936,6 +940,7 @@ JuliaOJIT::JuliaOJIT()
 #endif
     GlobalJD(ES.createBareJITDylib("JuliaGlobals")),
     JD(ES.createBareJITDylib("JuliaOJIT")),
+    LCTM(createLCTM(TM->getTargetTriple(), ES, 0)),
 #ifdef JL_USE_JITLINK
     // TODO: Port our memory management optimisations to JITLink instead of using the
     // default InProcessMemoryManager.
@@ -965,7 +970,8 @@ JuliaOJIT::JuliaOJIT()
         {ES, CompileLayer2, OptimizerT(PM2, PM_mutexes[2], 2)},
         {ES, CompileLayer3, OptimizerT(PM3, PM_mutexes[3], 3)},
     },
-    OptSelLayer(OptimizeLayers)
+    OptSelLayer(OptimizeLayers),
+    CODLayer(ES, OptSelLayer, *LCTM, orc::createLocalIndirectStubsManagerBuilder(TM->getTargetTriple()))
 {
 #ifdef JL_USE_JITLINK
 # if defined(_OS_DARWIN_) && defined(LLVM_SHLIB)
@@ -991,6 +997,13 @@ JuliaOJIT::JuliaOJIT()
     addPassesForOptLevel(PM1, *TMs[1], 1);
     addPassesForOptLevel(PM2, *TMs[2], 2);
     addPassesForOptLevel(PM3, *TMs[3], 3);
+    CODLayer.setPartitionFunction(
+#ifdef JL_USE_JITLINK
+        CODLayerT::compileRequested
+#else
+        CODLayerT::compileWholeModule
+#endif
+    );
 
     // Make sure SectionMemoryManager::getSymbolAddressInProcess can resolve
     // symbols in the program as well. The nullptr argument to the function
@@ -1070,7 +1083,7 @@ void JuliaOJIT::addModule(orc::ThreadSafeModule TSM)
 #endif
     });
     // TODO: what is the performance characteristics of this?
-    cantFail(OptSelLayer.add(JD, std::move(TSM)));
+    cantFail(CODLayer.add(JD, std::move(TSM)));
     // force eager compilation (for now), due to memory management specifics
     // (can't handle compilation recursion)
     for (auto Name : NewExports)

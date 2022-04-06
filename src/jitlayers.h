@@ -9,6 +9,7 @@
 
 #include <llvm/ExecutionEngine/Orc/IRCompileLayer.h>
 #include <llvm/ExecutionEngine/Orc/IRTransformLayer.h>
+#include <llvm/ExecutionEngine/Orc/CompileOnDemandLayer.h>
 #include <llvm/ExecutionEngine/JITEventListener.h>
 
 #include <llvm/Target/TargetMachine.h>
@@ -192,6 +193,7 @@ public:
 #endif
     typedef orc::IRCompileLayer CompileLayerT;
     typedef orc::IRTransformLayer OptimizeLayerT;
+    typedef orc::CompileOnDemandLayer CODLayerT;
     typedef object::OwningBinary<object::ObjectFile> OwningObj;
 private:
     template<typename ResourceT, size_t max = 0>
@@ -241,7 +243,7 @@ private:
             ResourcePool &pool;
             llvm::Optional<ResourceT> resource;
         };
-        
+
         OwningResource acquire() {
             return OwningResource(*this, acquire_());
         }
@@ -363,6 +365,7 @@ private:
     orc::JITDylib &JD;
 
     ResourcePool<orc::ThreadSafeContext> ContextPool{[](){ return orc::ThreadSafeContext(std::make_unique<LLVMContext>()); }};
+    std::unique_ptr<orc::LazyCallThroughManager> LCTM;
 
 #ifndef JL_USE_JITLINK
     std::shared_ptr<RTDyldMemoryManager> MemMgr;
@@ -375,6 +378,7 @@ private:
     CompileLayerT CompileLayer3;
     OptimizeLayerT OptimizeLayers[4];
     OptSelLayerT OptSelLayer;
+    CODLayerT CODLayer;
 
     DenseMap<void*, std::string> ReverseLocalSymbolTable;
 };
