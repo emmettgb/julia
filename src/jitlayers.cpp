@@ -1052,15 +1052,9 @@ void JuliaOJIT::addGlobalMapping(StringRef Name, uint64_t Addr)
 void JuliaOJIT::addModule(orc::ThreadSafeModule TSM)
 {
     JL_TIMING(LLVM_MODULE_FINISH);
-    std::vector<std::string> NewExports;
     TSM.withModuleDo([&](Module &M) {
         jl_decorate_module(M);
         shareStrings(M);
-        for (auto &F : M.global_values()) {
-            if (!F.isDeclaration() && F.getLinkage() == GlobalValue::ExternalLinkage) {
-                NewExports.push_back(getMangledName(F.getName()));
-            }
-        }
 #if !defined(JL_NDEBUG) && !defined(JL_USE_JITLINK)
         // validate the relocations for M (not implemented for the JITLink memory manager yet)
         for (Module::global_object_iterator I = M.global_objects().begin(), E = M.global_objects().end(); I != E; ) {
@@ -1084,11 +1078,6 @@ void JuliaOJIT::addModule(orc::ThreadSafeModule TSM)
     });
     // TODO: what is the performance characteristics of this?
     cantFail(CODLayer.add(JD, std::move(TSM)));
-    // force eager compilation (for now), due to memory management specifics
-    // (can't handle compilation recursion)
-    for (auto Name : NewExports)
-        cantFail(ES.lookup({&JD}, Name));
-
 }
 
 JL_JITSymbol JuliaOJIT::findSymbol(StringRef Name, bool ExportedSymbolsOnly)
