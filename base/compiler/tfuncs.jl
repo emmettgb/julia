@@ -1558,7 +1558,7 @@ function tuple_tfunc(argtypes::Vector{Any})
                 else
                     params[i] = Type
                 end
-            elseif x === DataType || x === UnionAll
+            elseif iskindtype(x)
                 params[i] = x
             elseif !isvarargtype(x) && hasintersect(x, Type)
                 params[i] = Union{x, Type}
